@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HabTrac</string>
+    <string name="button_update">Update</string>
+    <string name="button_save">Save</string>
+
+    <string name="menu_habit_add">Add habit</string>
+    <string name="menu_habit_about">About</string>
+    
+    <string name="menu_habit_delete">Delete</string>
+    <string name="menu_habit_reset">Reset</string>
+    
+    <string name="delete_title">Delete habit?</string>
+    <string name="delete_warn">Warning: This cannot be undone.</string>
+    <string name="edit_blank_name_warn">Habits without names cannot be saved. Exit anyway?</string>
+    
+    <string name="about_author">Author:</string>
+    <string name="about_author_name">Nicole Borrelli</string>
+    <string name="about_base64_routines_by">Base64 Routines:</string>
+    <string name="about_base64_name">Robert Harder</string>    
+</resources>

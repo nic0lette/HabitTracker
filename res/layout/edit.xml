@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+    <EditText android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/viewHabitName"></EditText>
+    <LinearLayout android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/linearLayout1">
+        <EditText android:layout_height="wrap_content" android:layout_weight="0.10" android:layout_width="fill_parent" android:id="@+id/viewHabitCountText" android:inputType="numberSigned">
+        </EditText>
+        <LinearLayout android:layout_height="fill_parent" android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_width="wrap_content">
+            <ImageButton android:layout_height="wrap_content" android:layout_weight="1" android:layout_width="wrap_content" android:src="@drawable/arrow_up_float" android:id="@+id/viewHabitCountUpButton"></ImageButton>
+            <ImageButton android:layout_height="wrap_content" android:layout_weight="1" android:layout_width="wrap_content" android:src="@drawable/arrow_down_float" android:id="@+id/viewHabitCountDownButton"></ImageButton>
+        </LinearLayout>
+    </LinearLayout>
+    <Button android:layout_height="wrap_content" android:text="@string/button_update" android:id="@+id/viewHabitUpdate" android:layout_width="wrap_content"></Button>
+    
+</LinearLayout>
