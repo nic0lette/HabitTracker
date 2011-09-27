@@ -169,14 +169,14 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
     		final TextView countField = (TextView)view.findViewById(R.id.habitListCount);
 
     		nameField.setText(habitItem.getName());
-    		countField.setText(Integer.toString(habitItem.getCount()));
+    		countField.setText(this.getContext().getString(R.string.list_count, habitItem.getCount()));
     		
     		return view;
     	}
     }
 
     /**
-     * Click handler for a habit in the list
+     * Click handler for a habit in the list - add one to the count
      * 
      * @param parent 	The AdapterView where the click happened.
      * @param view 	The view within the AdapterView that was clicked (this will be a view provided by the adapter)
@@ -185,14 +185,11 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
      */
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		// Set the parameter for the view activity
-		final GlobalState app = (GlobalState)this.getApplication();
-		app.setHabitParameter(mHabitsList.get(position));
-		app.setHabitIndex(position);
-
-		// Start the view intent
-		final Intent editIntent = new Intent(ListActivity.this, EditActivity.class);
-        startActivity(editIntent);
+		final TrackedHabit habit = mHabitsList.get(position);
+		habit.setCount(habit.getCount() + 1);
+		
+		// Notify the adapter of the change
+		mHabitAdapter.notifyDataSetChanged();
 	}
 	
 	/**
@@ -250,8 +247,15 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 	public void onCreateContextMenu(final ContextMenu menu, final View view, final ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
 		
+		// Inflate the menu
 		final MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.context, menu);
+		
+		// Get some more information about the item
+		final AdapterView.AdapterContextMenuInfo itemInfo = (AdapterView.AdapterContextMenuInfo)menuInfo;
+		
+		// Set a title so it's less... scary
+		menu.setHeaderTitle(mHabitsList.get(itemInfo.position).getName());
 	}
 	
 	/**
@@ -263,7 +267,22 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 		final AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
 		
 		switch (item.getItemId()) {
-		case R.id.delete:
+		case R.id.contextEdit:
+			// Set the parameter for the view activity
+			final GlobalState app = (GlobalState)this.getApplication();
+			app.setHabitParameter(mHabitsList.get(menuInfo.position));
+			app.setHabitIndex(menuInfo.position);
+
+			// Start the view intent
+			final Intent editIntent = new Intent(ListActivity.this, EditActivity.class);
+	        startActivity(editIntent);
+	        break;
+		case R.id.contextReset:
+			final TrackedHabit resetHabit = mHabitsList.get(menuInfo.position);
+			resetHabit.setCount(0);
+			mHabitAdapter.notifyDataSetChanged();
+			break;
+		case R.id.contextDelete:
 			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.delete_title)
 					.setMessage(R.string.delete_warn)
@@ -289,10 +308,6 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 			
 			// Done for now
 			break;
-		case R.id.reset:
-			final TrackedHabit resetHabit = mHabitsList.get(menuInfo.position);
-			resetHabit.setCount(0);
-			mHabitAdapter.notifyDataSetChanged();
 		}
 		return true;
 	}

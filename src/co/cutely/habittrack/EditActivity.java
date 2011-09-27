@@ -13,8 +13,8 @@ import android.widget.TextView;
 import android.view.View;
 
 public class EditActivity extends Activity implements View.OnClickListener {
-	protected TextView name = null;
-	protected TextView count = null;
+	protected TextView mName = null;
+	protected TextView mCount = null;
 	
     /** Called when the activity is first created. */
     @Override
@@ -33,17 +33,17 @@ public class EditActivity extends Activity implements View.OnClickListener {
         }
 
         // Get the parts of the interface
-        name = (TextView)findViewById(R.id.viewHabitName);
-        count = (TextView)findViewById(R.id.viewHabitCountText);
+        mName = (TextView)findViewById(R.id.editHabitName);
+        mCount = (TextView)findViewById(R.id.editHabitCountText);
         
         // Setup the data
-        name.setText(habit.getName());
-        count.setText(Integer.toString(habit.getCount()));
+        mName.setText(habit.getName());
+        mCount.setText(Integer.toString(habit.getCount()));
 
         // Get the buttons
         ImageButton up = (ImageButton)findViewById(R.id.viewHabitCountUpButton);
         ImageButton down = (ImageButton)findViewById(R.id.viewHabitCountDownButton);
-        Button update = (Button)findViewById(R.id.viewHabitUpdate);
+        Button update = (Button)findViewById(R.id.editHabitUpdate);
         
         // Should it be save or edit
         if (state.getHabitIndex() >= 0) {
@@ -63,26 +63,26 @@ public class EditActivity extends Activity implements View.OnClickListener {
 		switch (clickedView.getId()) {
 		case R.id.viewHabitCountUpButton:
 			do {
-				int newCount = Integer.parseInt(count.getText().toString()) + 1;
-				count.setText(Integer.toString(newCount));
+				int newCount = Integer.parseInt(mCount.getText().toString()) + 1;
+				mCount.setText(Integer.toString(newCount));
 			} while (false);
 			break;
 		case R.id.viewHabitCountDownButton:
 			do {
-				int newCount = Integer.parseInt(count.getText().toString()) - 1;
-				count.setText(Integer.toString(newCount));
+				int newCount = Integer.parseInt(mCount.getText().toString()) - 1;
+				mCount.setText(Integer.toString(newCount));
 			} while (false);
 			break;
-		case R.id.viewHabitUpdate:
+		case R.id.editHabitUpdate:
 			// Update the parameter based on changes
 			do {
-				final int newCount = Integer.parseInt(count.getText().toString());
-				final String newName = name.getText().toString(); 
+				final int newCount = Integer.parseInt(mCount.getText().toString());
+				final String newName = mName.getText().toString(); 
 				final TrackedHabit habit = ((GlobalState)this.getApplication()).getHabitParameter();
 				
 				// Check for name
 				if (newName == null || newName.length() == 0) {
-					name.requestFocus();
+					mName.requestFocus();
 
 					final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 					builder.setMessage(R.string.edit_blank_name_warn)

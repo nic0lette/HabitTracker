@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/reset" android:title="@string/menu_habit_reset" android:icon="@drawable/ic_menu_reset"></item>
-    <item android:id="@+id/delete" android:title="@string/menu_habit_delete" android:icon="@drawable/ic_menu_delete"></item>
+    <item android:title="@string/menu_habit_edit" android:icon="@drawable/ic_menu_edit" android:id="@+id/contextEdit"></item><item android:title="@string/menu_habit_reset" android:icon="@drawable/ic_menu_reset" android:id="@+id/contextReset"></item>
+    <item android:title="@string/menu_habit_delete" android:icon="@drawable/ic_menu_delete" android:id="@+id/contextDelete"></item>
+    
 </menu>
