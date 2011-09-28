@@ -21,6 +21,7 @@ public class FirstRunActivity  extends Activity implements AdapterView.OnItemCli
 
 	/** The list of ideas associated with the ListView */
 	private List<String> mIdeasArray;
+	private boolean[] mChecked;
 	
 	@Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -30,6 +31,7 @@ public class FirstRunActivity  extends Activity implements AdapterView.OnItemCli
         // Get the list of habit ideas
         final String[] ideasArray = this.getResources().getStringArray(R.array.habitIdeasList);
         mIdeasArray = Arrays.asList(ideasArray);
+        mChecked = new boolean[mIdeasArray.size()];
         
         // Get the ListView
         final ListView ideasList = (ListView)this.findViewById(R.id.firstRunIdeasList);
@@ -69,6 +71,7 @@ public class FirstRunActivity  extends Activity implements AdapterView.OnItemCli
     		// Populate the view
     		final CheckBox ideaCheckbox = (CheckBox)view.findViewById(R.id.ideaCheckBox);
     		ideaCheckbox.setText(mIdeasArray.get(position));
+    		ideaCheckbox.setChecked(mChecked[position]);
     		
     		return view;
     	}
@@ -84,8 +87,12 @@ public class FirstRunActivity  extends Activity implements AdapterView.OnItemCli
      */
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		final CheckBox box = (CheckBox)view.findViewById(R.id.ideaCheckBox);
-		box.toggle();
+		// First, update the state
+		mChecked[position] = !mChecked[position];
+		
+		// Update the checkbox
+		final CheckBox ideaCheckbox = (CheckBox)view.findViewById(R.id.ideaCheckBox);
+		ideaCheckbox.setChecked(mChecked[position]);
 	}
 
 	/**
@@ -95,25 +102,20 @@ public class FirstRunActivity  extends Activity implements AdapterView.OnItemCli
 	 */
 	@Override
 	public void onClick(View view) {
-		// Get the list
-        final ListView ideasList = (ListView)this.findViewById(R.id.firstRunIdeasList);
-        
         // Make a new list of habits to track
         final ArrayList<TrackedHabit> startingList = new ArrayList<TrackedHabit>();
 
-        // Iterate through the items to see which are checked (and should be created as habits) 
-        final int childCount = ideasList.getChildCount();
-		for (int index = 0; index < childCount; ++index) {
-			final View child = ideasList.getChildAt(index);
-			final CheckBox check = (CheckBox)child.findViewById(R.id.ideaCheckBox);
-			
-			// If the checkbox is checked, add it to the starting list
-			if (check.isChecked()) {
+        // Iterate through the checked items and add them to the list 
+        final int itemCount = mChecked.length;
+		for (int index = 0; index < itemCount; ++index) {
+			if (mChecked[index]) {
+				// Add the habit
 				final TrackedHabit habit = new TrackedHabit();
-				habit.setName(check.getText().toString());
+				habit.setName(mIdeasArray.get(index));
 				habit.setCount(0);
 				startingList.add(habit);
 			}
+			
 		}
 		
 		// Send the list back

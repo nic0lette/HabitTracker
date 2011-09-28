@@ -3,6 +3,6 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="fill_parent"
   android:layout_height="fill_parent" android:orientation="horizontal">
-    <CheckBox android:layout_width="fill_parent" android:text="CheckBox" android:layout_height="wrap_content" android:focusable="false" android:id="@+id/ideaCheckBox" android:clickable="false"></CheckBox>
+    <CheckBox android:layout_width="fill_parent" android:text="CheckBox" android:layout_height="wrap_content" android:id="@+id/ideaCheckBox" android:focusable="false" android:clickable="false"></CheckBox>
     
 </LinearLayout>
