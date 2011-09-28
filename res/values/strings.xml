@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HabitTracker</string>
+    <string name="app_name">HabitTrack</string>
     <string name="button_update">Update</string>
     <string name="button_save">Save</string>
     <string name="list_count">Count: %1$d</string>
@@ -22,5 +22,9 @@
     <string name="about_author">Author:</string>
     <string name="about_author_name">Nicole Borrelli</string>
     <string name="about_base64_routines_by">Base64 Routines:</string>
-    <string name="about_base64_name">Robert Harder</string>    
+    <string name="about_base64_name">Robert Harder</string>
+    
+    <string name="first_run_welcome">Welcome!</string>    
+    <string name="first_run_description">HabitTrack is software designed to make it easier to track behaviors, either to encourage or discourage it.</string>
+    <string name="first_run_continue">Get Started</string>    
 </resources>

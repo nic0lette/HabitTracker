@@ -43,7 +43,7 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 	final private String PREFERENCES_KEY = "HABITS_LIST";
 	
 	protected SharedPreferences mPreferences;
-	protected ArrayList<TrackedHabit> mHabitsList = new ArrayList<TrackedHabit>();
+	protected ArrayList<TrackedHabit> mHabitsList = null;
 	protected HabitAdapter mHabitAdapter;
 
 	/*
@@ -63,12 +63,19 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
         		try {
 					final Object decoded = Base64.decodeToObject(serialisedObject);
 					if (decoded instanceof ArrayList<?>) {
-						this.mHabitsList = (ArrayList<TrackedHabit>)decoded;
+						try {
+							this.mHabitsList = (ArrayList<TrackedHabit>)decoded;
+						} catch (final ClassCastException ex) {
+							Log.w(LOG_TAG, "Exception while casting from preferences: " + ex.getMessage());
+							this.mHabitsList = new ArrayList<TrackedHabit>();
+						}
 					}
 				} catch (IOException ex) {
 					Log.w(LOG_TAG, "Exception while decoding from preferences: " + ex.getMessage());
+					this.mHabitsList = new ArrayList<TrackedHabit>();
 				} catch (ClassNotFoundException ex) {
 					Log.w(LOG_TAG, "Exception while decoding from preferences: " + ex.getMessage());
+					this.mHabitsList = new ArrayList<TrackedHabit>();
 				}
         	}
         }
@@ -82,9 +89,19 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
         // Load data from the app preferences
         loadPreferences();
         
+        // First run?
+        if (this.mHabitsList == null) {
+        	// First run!
+			final Intent firstRunIntent = new Intent(ListActivity.this, FirstRunActivity.class);
+	        startActivity(firstRunIntent);
+
+	        // Create an empty list (this will be replaced later)
+	        this.mHabitsList = new ArrayList<TrackedHabit>();
+        }
+        
         // Get the list view
         final ListView habits = (ListView)findViewById(R.id.habitsList);
-        mHabitAdapter = new HabitAdapter(this, mHabitsList);
+        mHabitAdapter = new HabitAdapter(this, this.mHabitsList);
         habits.setAdapter(mHabitAdapter);
         habits.setOnItemClickListener(this);
         
@@ -95,37 +112,65 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
     @Override
 	protected void onResume() {
 		super.onResume();
-		
-		// Update a habit?
-		final GlobalState state = (GlobalState)this.getApplication();
-		final TrackedHabit habit = state.getHabitParameter();
-		if (habit != null) {
-			final int index = state.getHabitIndex();
 
-			// If the index is -1 it means "add"
-			if (index >= 0) {
-				mHabitsList.set(index, habit);
-				
-				// Set doesn't notify of a change, so do that now
-				mHabitAdapter.notifyDataSetChanged();
-			} else {
-				final String habitName = habit.getName();
-				if (habitName != null && habitName.length() > 0) {
-					// Add & notify the adapter the dataset has changed
-					mHabitsList.add(habit);
+		// Get the state
+		final GlobalState state = (GlobalState)this.getApplication();
+		
+		/*
+		 * Because of the Android application lifecycle (Create->Start->Resume->...)
+		 * even though the "first run" will immediately start the FirstRunActivity,
+		 * the ListActivity will go through the states Start, Resume, and Pause before that
+		 * happens.  So, while we could set "first start" to be true in the state information
+		 * above, it would just get reset here.
+		 * 
+		 * That's why it's set at the end of FirstRunActivity.  Then, when ListActivity resumes,
+		 * it will come through here again, and the flag will be set properly.
+		 */
+		
+		// Returning from first run?
+		if (state.isFirstRun()) {
+			/*
+			 * Get the list of selected habits and notify the adapter
+			 * 
+			 * Use addAll rather than simply assigning the list since
+			 * the list object is watched by the adapter. Setting a new object
+			 * breaks the link.
+			 */
+			this.mHabitsList.addAll(state.getInitialList());
+			this.mHabitAdapter.notifyDataSetChanged();
+		} else {
+			final TrackedHabit habit = state.getHabitParameter();
+			if (habit != null) {
+				final int index = state.getHabitIndex();
+
+				// If the index is -1 it means "add"
+				if (index >= 0) {
+					this.mHabitsList.set(index, habit);
+					
+					// Set doesn't notify of a change, so do that now
 					mHabitAdapter.notifyDataSetChanged();
+				} else {
+					final String habitName = habit.getName();
+					if (habitName != null && habitName.length() > 0) {
+						// Add & notify the adapter the dataset has changed
+						this.mHabitsList.add(habit);
+						this.mHabitAdapter.notifyDataSetChanged();
+					}
 				}
 			}
 		}
 		
-		// Clear up the parameter
+		// Clear up state
+		state.setFirstRun(false);
+		state.setInitialList(null);
 		state.setHabitParameter(null);
 	}
     
     @Override
     protected void onPause() {
     	super.onPause();
-    	
+
+    	// Write the list out to shared preferences to as persistent storage
     	final SharedPreferences.Editor edit = mPreferences.edit();
     	String serialisedString;
 		try {
@@ -135,44 +180,6 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 		} catch (IOException ex) {
 			Log.w(LOG_TAG, "Exception while encoding for preferences: " + ex.getMessage());
 		}
-    }
-
-	/**
-     * Inner class to implement the required bits of a custom ArrayAdapter
-     * to support the "habit_list_item" ListView item
-     *
-     */
-    private class HabitAdapter extends ArrayAdapter<TrackedHabit> {
-    	private LayoutInflater mInflater;
-    	
-    	public HabitAdapter(final Context context, final List<TrackedHabit> habits) {
-    		super(context, 0, habits);
-    		
-    		mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    	}
-    	
-
-    	@Override
-        public View getView(int position, final View providedView, final ViewGroup parent) {
-    		final View view;
-    		
-    		// See if the view was passed in or if it needs to be inflated
-    		if (providedView == null) {
-                view = mInflater.inflate(R.layout.habit_list_item, null);
-            } else {
-                view = providedView;
-            }
-    		
-    		final TrackedHabit habitItem = this.getItem(position);
-    		
-    		final TextView nameField = (TextView)view.findViewById(R.id.habitListName);
-    		final TextView countField = (TextView)view.findViewById(R.id.habitListCount);
-
-    		nameField.setText(habitItem.getName());
-    		countField.setText(this.getContext().getString(R.string.list_count, habitItem.getCount()));
-    		
-    		return view;
-    	}
     }
 
     /**
@@ -185,11 +192,11 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
      */
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		final TrackedHabit habit = mHabitsList.get(position);
+		final TrackedHabit habit = this.mHabitsList.get(position);
 		habit.setCount(habit.getCount() + 1);
 		
 		// Notify the adapter of the change
-		mHabitAdapter.notifyDataSetChanged();
+		this.mHabitAdapter.notifyDataSetChanged();
 	}
 	
 	/**
@@ -255,7 +262,7 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 		final AdapterView.AdapterContextMenuInfo itemInfo = (AdapterView.AdapterContextMenuInfo)menuInfo;
 		
 		// Set a title so it's less... scary
-		menu.setHeaderTitle(mHabitsList.get(itemInfo.position).getName());
+		menu.setHeaderTitle(this.mHabitsList.get(itemInfo.position).getName());
 	}
 	
 	/**
@@ -270,7 +277,7 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 		case R.id.contextEdit:
 			// Set the parameter for the view activity
 			final GlobalState app = (GlobalState)this.getApplication();
-			app.setHabitParameter(mHabitsList.get(menuInfo.position));
+			app.setHabitParameter(this.mHabitsList.get(menuInfo.position));
 			app.setHabitIndex(menuInfo.position);
 
 			// Start the view intent
@@ -278,9 +285,9 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 	        startActivity(editIntent);
 	        break;
 		case R.id.contextReset:
-			final TrackedHabit resetHabit = mHabitsList.get(menuInfo.position);
+			final TrackedHabit resetHabit = this.mHabitsList.get(menuInfo.position);
 			resetHabit.setCount(0);
-			mHabitAdapter.notifyDataSetChanged();
+			this.mHabitAdapter.notifyDataSetChanged();
 			break;
 		case R.id.contextDelete:
 			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -311,4 +318,42 @@ public class ListActivity extends Activity implements AdapterView.OnItemClickLis
 		}
 		return true;
 	}
+
+	/**
+     * Inner class to implement the required bits of a custom ArrayAdapter
+     * to support the "habit_list_item" ListView item
+     *
+     */
+    private class HabitAdapter extends ArrayAdapter<TrackedHabit> {
+    	private LayoutInflater mInflater;
+    	
+    	public HabitAdapter(final Context context, final List<TrackedHabit> habits) {
+    		super(context, 0, habits);
+    		
+    		mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    	}
+    	
+
+    	@Override
+        public View getView(int position, final View providedView, final ViewGroup parent) {
+    		final View view;
+    		
+    		// See if the view was passed in or if it needs to be inflated
+    		if (providedView == null) {
+                view = mInflater.inflate(R.layout.habit_list_item, null);
+            } else {
+                view = providedView;
+            }
+    		
+    		final TrackedHabit habitItem = this.getItem(position);
+    		
+    		final TextView nameField = (TextView)view.findViewById(R.id.habitListName);
+    		final TextView countField = (TextView)view.findViewById(R.id.habitListCount);
+
+    		nameField.setText(habitItem.getName());
+    		countField.setText(this.getContext().getString(R.string.list_count, habitItem.getCount()));
+    		
+    		return view;
+    	}
+    }
 }
